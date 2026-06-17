@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="Español Vivo" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="theme-color" content="#FBF6EC" />
+<title>Español Vivo · Input Comprensible</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          display: ['Fraunces', 'serif'],
+          body: ['Nunito', 'sans-serif'],
+        },
+        colors: {
+          arena: '#FBF6EC',
+          crema: '#FFFDF8',
+          terracota: '#D9683F',
+          terraSoft: '#E89B7C',
+          oliva: '#5C8A6B',
+          tinta: '#2B2620',
+          niebla: '#8A8073',
+        },
+      },
+    },
+  };
+</script>
+<style>
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background: radial-gradient(circle at 15% 0%, #FDF2E6 0%, #FBF6EC 45%, #F4EFE3 100%);
+    background-attachment: fixed;
+    min-height: 100svh;
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: #E89B7C; color: #fff; }
+
+  /* táctil: sin destello azul, sin retraso de doble toque */
+  button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+  /* el área de notch (encabezado y pie) respeta el recorte de iPhone */
+  header { padding-top: max(2rem, env(safe-area-inset-top)); }
+  main { padding-bottom: max(4rem, calc(env(safe-area-inset-bottom) + 2rem)); }
+
+  /* ---- Escenario / animaciones de emoji ---- */
+  .actor { display:inline-block; will-change: transform; }
+  .anim-caminar  { animation: caminar 1.4s ease-in-out infinite; }
+  .anim-correr   { animation: correr 0.7s linear infinite; }
+  .anim-saltar   { animation: saltar 0.9s cubic-bezier(.3,.7,.4,1) infinite; }
+  .anim-comer    { animation: comer 0.8s ease-in-out infinite; }
+  .anim-beber    { animation: beber 1.6s ease-in-out infinite; }
+  .anim-dormir   { animation: dormir 3s ease-in-out infinite; }
+  .anim-hablar   { animation: hablar 0.5s ease-in-out infinite; }
+  .anim-reir     { animation: reir 0.55s ease-in-out infinite; }
+  .anim-bailar   { animation: bailar 0.7s ease-in-out infinite; }
+  .anim-senalar  { animation: senalar 1.1s ease-in-out infinite; }
+  .anim-flotar   { animation: flotar 2.4s ease-in-out infinite; }
+
+  @keyframes caminar { 0%,100%{transform:translateX(-26px) rotate(-4deg)} 50%{transform:translateX(26px) rotate(4deg)} }
+  @keyframes correr  { 0%,100%{transform:translateX(-32px) rotate(-8deg) scale(1.02)} 50%{transform:translateX(32px) rotate(8deg)} }
+  @keyframes saltar  { 0%,100%{transform:translateY(0)} 40%{transform:translateY(-46px)} }
+  @keyframes comer   { 0%,100%{transform:scale(1)} 50%{transform:scale(1.22) rotate(3deg)} }
+  @keyframes beber   { 0%,100%{transform:rotate(-3deg)} 50%{transform:rotate(20deg) translateY(-4px)} }
+  @keyframes dormir  { 0%,100%{transform:rotate(-6deg) translateY(0)} 50%{transform:rotate(6deg) translateY(6px)} }
+  @keyframes hablar  { 0%,100%{transform:scale(1)} 50%{transform:scale(1.12)} }
+  @keyframes reir    { 0%,100%{transform:translateY(0) rotate(-3deg)} 50%{transform:translateY(-10px) rotate(3deg)} }
+  @keyframes bailar  { 0%,100%{transform:rotate(-14deg)} 50%{transform:rotate(14deg)} }
+  @keyframes senalar { 0%,100%{transform:translateX(0)} 50%{transform:translateX(14px) scale(1.08)} }
+  @keyframes flotar  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-14px)} }
+
+  .actor-in { animation-name: aparece; animation-duration: .5s; animation-timing-function: cubic-bezier(.2,.9,.3,1.3); }
+  @keyframes aparece { from{opacity:0; transform:scale(.4) translateY(20px)} to{opacity:1} }
+
+  .zzz { position:absolute; top:-6px; right:-10px; font-size:.5em; opacity:.7; animation: flotar 2s ease-in-out infinite; }
+
+  .frase-activa { background: #fff; box-shadow: 0 8px 24px -10px rgba(217,104,63,.45); }
+  .frase-activa .marca { transform: scaleY(1); }
+
+  .spin { animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .pulse-dot { animation: pulse-dot 1.2s ease-in-out infinite; }
+  @keyframes pulse-dot { 0%,100%{opacity:.3; transform:translateY(0)} 50%{opacity:1; transform:translateY(-5px)} }
+
+  textarea { scrollbar-width: thin; }
+</style>
+</head>
+<body class="font-body text-tinta min-h-screen">
+
+<!-- ================= ENCABEZADO ================= -->
+<header class="max-w-6xl mx-auto px-5 pt-8 pb-2 flex items-center justify-between">
+  <div class="flex items-center gap-3">
+    <div class="w-11 h-11 rounded-2xl bg-terracota text-crema grid place-items-center text-2xl shadow-lg shadow-terracota/30 select-none">🗣️</div>
+    <div>
+      <h1 class="font-display text-2xl sm:text-3xl leading-none">Español <span class="italic text-terracota">Vivo</span></h1>
+      <p class="text-niebla text-sm mt-0.5">imágenes &middot; sonidos &middot; sin traducción</p>
+    </div>
+  </div>
+  <button id="btnConfig" title="Clave API" class="w-10 h-10 rounded-full bg-crema border border-black/5 grid place-items-center text-xl hover:bg-white transition shadow-sm">⚙️</button>
+</header>
+
+<main class="max-w-6xl mx-auto px-5 pb-16">
+
+  <!-- ================= ENTRADA ================= -->
+  <section id="panelEntrada" class="mt-4 bg-crema/80 backdrop-blur rounded-[28px] border border-black/5 shadow-xl shadow-black/5 p-5 sm:p-7">
+    <div class="flex flex-col lg:flex-row gap-5">
+      <div class="flex-1">
+        <label class="font-display text-lg block mb-2">✍️ Tus palabras de hoy</label>
+        <textarea id="entrada" rows="3"
+          class="w-full rounded-2xl border border-black/10 bg-white/90 px-4 py-3 text-lg outline-none focus:border-terracota focus:ring-4 focus:ring-terraSoft/30 transition resize-none"
+          placeholder="pedir comida · la cuenta · tengo hambre · el camarero"></textarea>
+
+        <div class="mt-3 flex flex-wrap gap-2" id="temas"></div>
+      </div>
+
+      <div class="lg:w-56 flex flex-col gap-3 justify-end">
+        <button id="btnGenerar"
+          class="w-full py-4 rounded-2xl bg-terracota text-crema font-extrabold text-lg shadow-lg shadow-terracota/30 hover:bg-[#c95a33] active:scale-[.98] transition flex items-center justify-center gap-2">
+          <span>✨ Crear historia</span>
+        </button>
+        <button id="btnEjemplo"
+          class="w-full py-3 rounded-2xl bg-white text-oliva font-bold border border-oliva/20 hover:bg-oliva/5 active:scale-[.98] transition">
+          ▶︎ Ver ejemplo
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ESTADO / CARGA ================= -->
+  <div id="estado" class="hidden mt-6 text-center text-niebla">
+    <div class="inline-flex items-center gap-3 bg-crema px-5 py-3 rounded-full border border-black/5 shadow-sm">
+      <span class="inline-block w-5 h-5 rounded-full border-[3px] border-terraSoft border-t-terracota spin"></span>
+      <span id="estadoTexto" class="font-bold">Creando tu historia…</span>
+    </div>
+  </div>
+
+  <!-- ================= REPRODUCTOR ================= -->
+  <section id="reproductor" class="hidden mt-7">
+    <h2 id="tituloHistoria" class="font-display text-2xl sm:text-3xl text-center mb-5 italic"></h2>
+
+    <div class="grid lg:grid-cols-2 gap-5">
+
+      <!-- IZQUIERDA: ESCENARIO VISUAL -->
+      <div class="relative rounded-[28px] overflow-hidden border border-black/5 shadow-xl shadow-black/5 min-h-[340px] lg:min-h-[460px]"
+           style="background: linear-gradient(180deg,#FFF6E9 0%, #FDEBD7 55%, #F6DCC2 100%);">
+        <!-- suelo -->
+        <div class="absolute bottom-0 left-0 right-0 h-24" style="background:linear-gradient(180deg, rgba(92,138,107,0) 0%, rgba(92,138,107,.22) 100%)"></div>
+        <div id="escenario" class="absolute inset-0 grid place-items-center text-center px-6">
+          <div class="text-niebla/70 select-none">
+            <div class="text-6xl mb-2">🎬</div>
+          </div>
+        </div>
+        <div id="emojiSecundario" class="absolute top-4 left-0 right-0 flex justify-center gap-3 text-3xl pointer-events-none"></div>
+      </div>
+
+      <!-- DERECHA: AUDIO + TEXTO -->
+      <div class="rounded-[28px] border border-black/5 shadow-xl shadow-black/5 bg-crema/80 backdrop-blur p-5 sm:p-6 flex flex-col">
+
+        <!-- controles -->
+        <div class="flex items-center gap-3 mb-4">
+          <button id="btnPlay"
+            class="w-16 h-16 rounded-full bg-terracota text-crema grid place-items-center text-2xl shadow-lg shadow-terracota/40 hover:bg-[#c95a33] active:scale-95 transition shrink-0">▶︎</button>
+
+          <button id="btnReiniciar" title="Otra vez"
+            class="w-12 h-12 rounded-full bg-white border border-black/10 grid place-items-center text-xl hover:bg-white/60 active:scale-95 transition shrink-0">↺</button>
+
+          <button id="btnVelocidad"
+            class="ml-auto px-4 h-12 rounded-full bg-white border border-black/10 font-bold text-sm hover:bg-white/60 active:scale-95 transition flex items-center gap-1.5">
+            🐢 <span id="velTexto">Lento</span>
+          </button>
+        </div>
+
+        <!-- barra de progreso por frases -->
+        <div id="progreso" class="flex gap-1.5 mb-4"></div>
+
+        <!-- texto de la historia -->
+        <div id="frases" class="flex-1 space-y-2 overflow-y-auto max-h-[330px] pr-1"></div>
+      </div>
+    </div>
+  </section>
+
+  <p class="text-center text-niebla/70 text-xs mt-10">
+    Toca una frase para escucharla &middot; el oído aprende antes que la mente 🌱
+  </p>
+</main>
+
+<!-- ================= MODAL CLAVE API ================= -->
+<div id="modalConfig" class="hidden fixed inset-0 z-50 bg-tinta/40 backdrop-blur-sm grid place-items-center px-5">
+  <div class="bg-crema rounded-3xl p-6 max-w-md w-full shadow-2xl border border-black/5">
+    <h3 class="font-display text-xl mb-1">🔑 Clave API de Anthropic</h3>
+    <p class="text-niebla text-sm mb-4">Se guarda solo en tu navegador. Empieza con <code class="bg-black/5 px-1 rounded">sk-ant-</code>.</p>
+    <input id="inputClave" type="password" placeholder="sk-ant-..."
+      class="w-full rounded-xl border border-black/10 bg-white px-4 py-3 outline-none focus:border-terracota focus:ring-4 focus:ring-terraSoft/30 transition mb-4" />
+    <div class="flex gap-3">
+      <button id="btnGuardarClave" class="flex-1 py-3 rounded-xl bg-terracota text-crema font-bold hover:bg-[#c95a33] transition">Guardar</button>
+      <button id="btnCerrarConfig" class="px-5 py-3 rounded-xl bg-white border border-black/10 font-bold hover:bg-white/60 transition">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ESTADO GLOBAL
+============================================================ */
+const LS_KEY = 'espanolvivo_api_key';
+const MODELO = 'claude-opus-4-8';
+
+const TEMAS = [
+  ['🍽️','Pedir comida'], ['🎸','Pasatiempos'], ['👨‍👩‍👧','La familia'],
+  ['✈️','Viajar'], ['☕','En el café'], ['🛒','De compras'],
+  ['🐶','Los animales'], ['🌧️','El tiempo']
+];
+
+let historia = null;     // { titulo, frases:[{texto, emojis, animacion}] }
+let idx = 0;
+let reproduciendo = false;
+let velocidadLenta = true;
+let vozES = null;
+
+/* ============================================================
+   VOCES (Web Speech)
+============================================================ */
+function cargarVoces() {
+  const voces = speechSynthesis.getVoices();
+  // preferimos español de España, luego cualquier español
+  vozES = voces.find(v => /es[-_]ES/i.test(v.lang))
+       || voces.find(v => /^es/i.test(v.lang))
+       || null;
+}
+cargarVoces();
+if (typeof speechSynthesis !== 'undefined') {
+  speechSynthesis.onvoiceschanged = cargarVoces;
+}
+
+/* ============================================================
+   TEMAS (chips)
+============================================================ */
+const cont = document.getElementById('temas');
+TEMAS.forEach(([emo, txt]) => {
+  const b = document.createElement('button');
+  b.className = 'px-3 py-1.5 rounded-full bg-white border border-black/10 text-sm font-semibold hover:border-terracota hover:text-terracota transition';
+  b.innerHTML = `${emo} ${txt}`;
+  b.onclick = () => {
+    const ta = document.getElementById('entrada');
+    ta.value = (ta.value.trim() ? ta.value.trim() + ' · ' : '') + txt.toLowerCase();
+    ta.focus();
+  };
+  cont.appendChild(b);
+});
+
+/* ============================================================
+   MODAL CLAVE
+============================================================ */
+const modal = document.getElementById('modalConfig');
+document.getElementById('btnConfig').onclick = () => {
+  document.getElementById('inputClave').value = localStorage.getItem(LS_KEY) || '';
+  modal.classList.remove('hidden');
+};
+document.getElementById('btnCerrarConfig').onclick = () => modal.classList.add('hidden');
+document.getElementById('btnGuardarClave').onclick = () => {
+  const v = document.getElementById('inputClave').value.trim();
+  if (v) localStorage.setItem(LS_KEY, v);
+  modal.classList.add('hidden');
+};
+
+/* ============================================================
+   GENERAR HISTORIA (Claude API · structured outputs)
+============================================================ */
+const ESQUEMA = {
+  type: 'object',
+  properties: {
+    titulo: { type: 'string' },
+    frases: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          texto: { type: 'string' },
+          emojis: { type: 'array', items: { type: 'string' } },
+          animacion: {
+            type: 'string',
+            enum: ['caminar','correr','saltar','comer','beber','dormir','hablar','reir','bailar','senalar','flotar']
+          }
+        },
+        required: ['texto','emojis','animacion'],
+        additionalProperties: false
+      }
+    }
+  },
+  required: ['titulo','frases'],
+  additionalProperties: false
+};
+
+function construirPrompt(palabras) {
+  return `Eres un profesor de español especializado en INPUT COMPRENSIBLE para principiantes absolutos (nivel súper principiante, A0-A1).
+
+Crea una historia MUY corta, MUY simple y divertida en español usando estas palabras o temas: "${palabras}".
+
+Reglas estrictas:
+- Entre 6 y 9 frases. Cada frase muy corta (máximo 7 palabras).
+- Presente de indicativo. Vocabulario altísima frecuencia. Repite las palabras clave varias veces.
+- Tono cálido, gracioso y un poco absurdo (memorable para aprender).
+- TODO en español. Nunca inglés.
+- Para cada frase elige de 1 a 3 emojis que REPRESENTEN visualmente el sustantivo y la acción de esa frase (actúa la escena con imágenes).
+- Elige UNA animación que encaje con el verbo principal de la frase, de esta lista exacta:
+  caminar, correr, saltar, comer, beber, dormir, hablar, reir, bailar, senalar, flotar.
+- "titulo" es un título corto y gracioso en español.
+
+Devuelve solo los datos según el esquema.`;
+}
+
+async function generar() {
+  const palabras = document.getElementById('entrada').value.trim();
+  if (!palabras) {
+    document.getElementById('entrada').focus();
+    return;
+  }
+  const clave = localStorage.getItem(LS_KEY);
+  if (!clave) {
+    document.getElementById('inputClave').value = '';
+    modal.classList.remove('hidden');
+    document.getElementById('estadoTexto');
+    mostrarEstado('Añade tu clave API para crear historias ✦', false);
+    return;
+  }
+
+  mostrarEstado('Creando tu historia…', true);
+  document.getElementById('reproductor').classList.add('hidden');
+
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': clave,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: MODELO,
+        max_tokens: 1500,
+        output_config: {
+          effort: 'low',
+          format: { type: 'json_schema', schema: ESQUEMA }
+        },
+        messages: [{ role: 'user', content: construirPrompt(palabras) }]
+      })
+    });
+
+    if (!r.ok) {
+      const e = await r.json().catch(() => ({}));
+      throw new Error(e?.error?.message || ('Error ' + r.status));
+    }
+    const data = await r.json();
+    const txt = (data.content || []).find(b => b.type === 'text')?.text || '';
+    const json = JSON.parse(txt);
+    cargarHistoria(json);
+  } catch (err) {
+    mostrarEstado('Ups… ' + err.message, false);
+  }
+}
+
+/* ============================================================
+   ESTADO VISUAL
+============================================================ */
+function mostrarEstado(texto, cargando) {
+  const e = document.getElementById('estado');
+  e.classList.remove('hidden');
+  document.getElementById('estadoTexto').textContent = texto;
+  e.querySelector('.spin').style.display = cargando ? '' : 'none';
+  if (!cargando) setTimeout(() => e.classList.add('hidden'), 4000);
+}
+
+/* ============================================================
+   CARGAR HISTORIA EN EL REPRODUCTOR
+============================================================ */
+function cargarHistoria(h) {
+  detener();
+  historia = h;
+  idx = 0;
+  document.getElementById('estado').classList.add('hidden');
+  document.getElementById('tituloHistoria').textContent = h.titulo || '';
+
+  // texto de frases
+  const cont = document.getElementById('frases');
+  cont.innerHTML = '';
+  h.frases.forEach((f, i) => {
+    const div = document.createElement('button');
+    div.className = 'frase relative w-full text-left rounded-2xl px-4 py-3 text-lg leading-snug border border-transparent hover:bg-white/70 transition flex gap-3 items-center';
+    div.innerHTML = `
+      <span class="marca absolute left-0 top-2 bottom-2 w-1 rounded-full bg-terracota origin-center transition-transform" style="transform:scaleY(0)"></span>
+      <span class="text-2xl shrink-0">${(f.emojis && f.emojis[0]) || '💬'}</span>
+      <span class="flex-1">${f.texto}</span>`;
+    div.onclick = () => { reproduciendo = true; togglePlayUI(true); reproducirDesde(i); };
+    cont.appendChild(div);
+  });
+
+  // barra de progreso
+  const prog = document.getElementById('progreso');
+  prog.innerHTML = '';
+  h.frases.forEach(() => {
+    const s = document.createElement('div');
+    s.className = 'h-1.5 flex-1 rounded-full bg-black/10 transition-colors';
+    prog.appendChild(s);
+  });
+
+  document.getElementById('reproductor').classList.remove('hidden');
+  pintarEscena(0);
+  document.getElementById('reproductor').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ============================================================
+   ESCENARIO VISUAL
+============================================================ */
+function pintarEscena(i) {
+  const f = historia.frases[i];
+  const esc = document.getElementById('escenario');
+  const emojis = (f.emojis && f.emojis.length) ? f.emojis : ['💬'];
+  const principal = emojis[0];
+  const resto = emojis.slice(1);
+
+  const zzz = f.animacion === 'dormir' ? '<span class="zzz">💤</span>' : '';
+
+  esc.innerHTML = `
+    <div class="relative flex items-end justify-center gap-4">
+      <span class="actor actor-in anim-${f.animacion} relative text-[7rem] sm:text-[9rem] drop-shadow-[0_12px_18px_rgba(0,0,0,.12)]">
+        ${principal}${zzz}
+      </span>
+    </div>`;
+
+  // emojis secundarios flotando arriba
+  const sec = document.getElementById('emojiSecundario');
+  sec.innerHTML = resto.map((e, k) =>
+    `<span class="actor actor-in anim-flotar" style="animation-delay:${k * .25}s">${e}</span>`
+  ).join('');
+}
+
+/* ============================================================
+   REPRODUCCIÓN (TTS sincronizado)
+============================================================ */
+function resaltar(i) {
+  document.querySelectorAll('.frase').forEach((el, k) => {
+    el.classList.toggle('frase-activa', k === i);
+    if (k === i) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
+  document.querySelectorAll('#progreso > div').forEach((el, k) => {
+    el.classList.toggle('bg-terracota', k < i);
+    el.classList.toggle('bg-terraSoft', k === i);
+    el.classList.toggle('bg-black/10', k > i);
+  });
+}
+
+function reproducirDesde(i) {
+  speechSynthesis.cancel();
+  idx = i;
+  hablarActual();
+}
+
+function hablarActual() {
+  if (!historia || idx >= historia.frases.length) {
+    reproduciendo = false;
+    togglePlayUI(false);
+    return;
+  }
+  const f = historia.frases[idx];
+  resaltar(idx);
+  pintarEscena(idx);
+
+  const u = new SpeechSynthesisUtterance(f.texto);
+  u.lang = 'es-ES';
+  if (vozES) u.voice = vozES;
+  u.rate = velocidadLenta ? 0.62 : 0.9;   // ¡muy claro y entusiasta!
+  u.pitch = 1.08;
+  u.onend = () => {
+    if (!reproduciendo) return;
+    idx++;
+    if (idx < historia.frases.length) {
+      setTimeout(hablarActual, 420);        // pausa natural entre frases
+    } else {
+      resaltar(historia.frases.length);     // marca todo completado
+      reproduciendo = false;
+      togglePlayUI(false);
+      idx = 0;
+    }
+  };
+  speechSynthesis.speak(u);
+}
+
+function togglePlayUI(playing) {
+  document.getElementById('btnPlay').textContent = playing ? '❚❚' : '▶︎';
+}
+
+function detener() {
+  reproduciendo = false;
+  speechSynthesis.cancel();
+  togglePlayUI(false);
+}
+
+/* ----- botones del reproductor ----- */
+document.getElementById('btnPlay').onclick = () => {
+  if (!historia) return;
+  if (reproduciendo) {
+    // pausar
+    reproduciendo = false;
+    speechSynthesis.pause();
+    togglePlayUI(false);
+  } else {
+    reproduciendo = true;
+    togglePlayUI(true);
+    if (speechSynthesis.paused && speechSynthesis.speaking) {
+      speechSynthesis.resume();
+    } else {
+      reproducirDesde(idx >= historia.frases.length ? 0 : idx);
+    }
+  }
+};
+
+document.getElementById('btnReiniciar').onclick = () => {
+  if (!historia) return;
+  reproduciendo = true;
+  togglePlayUI(true);
+  reproducirDesde(0);
+};
+
+document.getElementById('btnVelocidad').onclick = () => {
+  velocidadLenta = !velocidadLenta;
+  document.getElementById('velTexto').textContent = velocidadLenta ? 'Lento' : 'Normal';
+  document.getElementById('btnVelocidad').firstChild.textContent = velocidadLenta ? '🐢 ' : '🐇 ';
+};
+
+/* ============================================================
+   BOTONES PRINCIPALES
+============================================================ */
+document.getElementById('btnGenerar').onclick = generar;
+document.getElementById('entrada').addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') generar();
+});
+
+/* ----- HISTORIA DE EJEMPLO (sin clave API) ----- */
+const EJEMPLO = {
+  titulo: 'El camarero y el gato con hambre',
+  frases: [
+    { texto: 'Yo tengo mucha hambre.', emojis: ['😋','🍽️'], animacion: 'hablar' },
+    { texto: 'El camarero camina rápido.', emojis: ['🧑‍🍳','🍷'], animacion: 'caminar' },
+    { texto: 'Quiero comer una pizza grande.', emojis: ['🍕'], animacion: 'comer' },
+    { texto: 'El gato también tiene hambre.', emojis: ['🐱','🍕'], animacion: 'senalar' },
+    { texto: '¡El gato salta a la mesa!', emojis: ['🐱'], animacion: 'saltar' },
+    { texto: 'El gato come toda la pizza.', emojis: ['🐱','🍕'], animacion: 'comer' },
+    { texto: 'Yo bebo agua y río.', emojis: ['😂','💧'], animacion: 'reir' },
+    { texto: 'El camarero baila feliz.', emojis: ['🧑‍🍳','🎶'], animacion: 'bailar' },
+  ]
+};
+document.getElementById('btnEjemplo').onclick = () => cargarHistoria(EJEMPLO);
+
+/* parar el audio al cerrar/recargar */
+window.addEventListener('beforeunload', () => speechSynthesis.cancel());
+</script>
+</body>
+</html>
