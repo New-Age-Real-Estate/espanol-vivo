@@ -439,11 +439,7 @@ function pintarEscena(i){
   }).join('');
 }
 function popClave(c){
-  const layer=document.getElementById('popLayer');
-  const d=document.createElement('div'); d.className='pop';
-  d.innerHTML=`<div class="text-6xl sm:text-7xl">${c.emoji}</div>
-    <div class="mt-1 font-display text-xl sm:text-2xl text-terracota bg-crema/90 rounded-full px-3 py-0.5 shadow">${c.palabra}</div>`;
-  layer.appendChild(d); setTimeout(()=>d.remove(),1200);
+  // sin animación emergente (nada parpadea) — solo registra la palabra para el banco
   aprender(c.palabra, c.emoji, c.en);
 }
 
